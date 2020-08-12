@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -17,7 +16,7 @@
 
     <FrameLayout
         android:id="@+id/frame_message"
-        android:visibility="gone"
+        android:visibility="visible"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
@@ -66,7 +65,7 @@
 
     <RelativeLayout
         android:id="@+id/frameDataControls"
-        android:visibility="visible"
+        android:visibility="gone"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
@@ -100,6 +99,8 @@
 
         <com.jjoe64.graphview.GraphView
             android:id="@+id/gv_graph"
+            android:layout_below="@+id/start_data_receiving"
+            android:layout_marginTop="8dp"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 

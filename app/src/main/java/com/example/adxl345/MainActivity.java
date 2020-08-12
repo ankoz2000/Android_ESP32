@@ -14,6 +14,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.method.MovementMethod;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.View;
@@ -83,7 +84,7 @@ public class MainActivity extends AppCompatActivity implements
     private GraphView gvGraph;
     private LineGraphSeries series;
 
-    private String lastSensorValues;
+    private String lastSensorValues = "";
 
     private Handler handler;
     private Runnable timer;
@@ -120,6 +121,11 @@ public class MainActivity extends AppCompatActivity implements
         bluetoothDevices = new ArrayList<>();
         series           = new LineGraphSeries();
 
+        gvGraph.addSeries(series);
+        gvGraph.getViewport().setMinX(0);
+        gvGraph.getViewport().setMaxX(40);
+        gvGraph.getViewport().setXAxisBoundsManual(true);
+
         progressDialog = new ProgressDialog(this);
         progressDialog.setCancelable(false);
         progressDialog.setTitle(getString(R.string.connecting));
@@ -146,9 +152,23 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     @Override
+    protected void onPause() {
+        super.onPause();
+        cancelTimer();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (connectedThread != null) {
+            startTimer();
+        }
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
-
+        cancelTimer();
         unregisterReceiver(receiver);
 
         if (connectThread != null) {
@@ -164,6 +184,7 @@ public class MainActivity extends AppCompatActivity implements
         if (v.equals(btnEnableSearch)) {
             enableSearch();
         } else if (v.equals(btnDisconnect)) {
+            cancelTimer();
             if (connectedThread != null) {
                 connectedThread.cancel();
             }
@@ -181,6 +202,8 @@ public class MainActivity extends AppCompatActivity implements
             if (device != null) {
                 connectThread = new ConnectThread(device);
                 connectThread.start();
+
+                startTimer();
             }
         }
     }
@@ -453,14 +476,6 @@ public class MainActivity extends AppCompatActivity implements
                         sbConsole.append(buffer.toString());
                         lastSensorValues = buffer.toString();
                         buffer.delete(0, buffer.length());
-
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                etConsole.setText(sbConsole.toString());
-                                etConsole.setMovementMethod(movementMethod);
-                            }
-                        });
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -520,16 +535,24 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void startTimer () {
+        cancelTimer();
         handler = new Handler();
+        final MovementMethod movementMethod = new ScrollingMovementMethod();
         handler.postDelayed(timer = new Runnable() {
             @Override
             public void run() {
+                etConsole.setText(lastSensorValues);
+                etConsole.setMovementMethod(movementMethod);
+
                 HashMap dataSensor = parseData(lastSensorValues);
                 if (dataSensor != null) {
                     if (dataSensor.containsKey("X") && dataSensor.containsKey("Y") && dataSensor.containsKey("Z")) {
-                        int x = Integer.parseInt(dataSensor.get("X").toString());
-                        series.appendData(new DataPoint(xLastValue, x), true, 40);
-                        Toast.makeText()
+                        int temp = Integer.parseInt(dataSensor.get("X").toString());
+                        int tempY = Integer.parseInt(dataSensor.get("Y").toString());
+                        int tempZ = Integer.parseInt(dataSensor.get("Z").toString());
+                        series.appendData(new DataPoint(xLastValue, temp), true, 40);
+                        series.appendData(new DataPoint(xLastValue, tempY), true, 40);
+                        series.appendData(new DataPoint(xLastValue, tempZ), true, 40);
                     }
                     xLastValue++;
                 }
@@ -538,7 +561,7 @@ public class MainActivity extends AppCompatActivity implements
         }, DELAY_TIMER);
     }
 
-    private void cancelTimer () => {
+    private void cancelTimer () {
         if (handler != null) {
             handler.removeCallbacks(timer);
         }
