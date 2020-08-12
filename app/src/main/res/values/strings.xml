@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">Accelerometer</string>
+    <string name="on_off_bluetooth">On/off Bluetooth</string>
+    <string name="bluetooth_off">Bluetooth is disabled</string>
+    <string name="start_searching">Start searching</string>
+    <string name="Bluetooth_is_not_available">Bluetooth is not available</string>
+    <string name="stop_searching">Stop searching</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="start_data_recieving">Start data receiving</string>
+    <string name="start_data_receiving">start_data_receiving</string>
+    <string name="name_device">Name device</string>
+    <string name="address_device">Address device</string>
+    <string name="connecting">Connecting…</string>
+    <string name="wait">Wait please:)</string>
+</resources>
