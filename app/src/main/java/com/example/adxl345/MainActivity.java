@@ -42,6 +42,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 public class MainActivity extends AppCompatActivity implements
@@ -55,7 +56,7 @@ public class MainActivity extends AppCompatActivity implements
     private static final int REQ_ENABLE_BT    = 10;
     public static final int BT_BOUNDED        = 21;
     public static final int BT_SEARCH         = 22;
-    private static final short DELAY_TIMER = 500;
+    private static final long DELAY_TIMER = 1000;
 
 
     private FrameLayout frameMessage;
@@ -76,13 +77,15 @@ public class MainActivity extends AppCompatActivity implements
     private BtListAdapter listAdapter;
     private ArrayList<BluetoothDevice> bluetoothDevices;
 
+    private Button btnX;
+
     private ConnectThread connectThread;
     private ConnectedThread connectedThread;
 
     private ProgressDialog progressDialog;
 
     private GraphView gvGraph;
-    private LineGraphSeries series;
+    private LineGraphSeries series = new LineGraphSeries();
 
     private String lastSensorValues = "";
 
@@ -109,22 +112,26 @@ public class MainActivity extends AppCompatActivity implements
         switchGetting     = findViewById(R.id.start_data_receiving);
         etConsole         = findViewById(R.id.et_console);
 
-        gvGraph           = findViewById(R.id.gv_graph);
+        btnX = findViewById(R.id.get_x);
+
+        gvGraph = findViewById(R.id.gv_graph);
 
         switchEnableBt.setOnCheckedChangeListener(this);
         btnEnableSearch.setOnClickListener(this);
         listBtDevices.setOnItemClickListener(this);
 
+        btnX.setVisibility(View.GONE);
+
         btnDisconnect.setOnClickListener(this);
         switchGetting.setOnCheckedChangeListener(this);
 
         bluetoothDevices = new ArrayList<>();
-        series           = new LineGraphSeries();
 
         gvGraph.addSeries(series);
         gvGraph.getViewport().setMinX(0);
-        gvGraph.getViewport().setMaxX(40);
+        gvGraph.getViewport().setMaxX(10);
         gvGraph.getViewport().setXAxisBoundsManual(true);
+        gvGraph.setVisibility(View.GONE);
 
         progressDialog = new ProgressDialog(this);
         progressDialog.setCancelable(false);
@@ -154,21 +161,21 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     protected void onPause() {
         super.onPause();
-        cancelTimer();
+       // cancelTimer();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         if (connectedThread != null) {
-            startTimer();
+         //   startTimer();
         }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        cancelTimer();
+       // cancelTimer();
         unregisterReceiver(receiver);
 
         if (connectThread != null) {
@@ -184,7 +191,7 @@ public class MainActivity extends AppCompatActivity implements
         if (v.equals(btnEnableSearch)) {
             enableSearch();
         } else if (v.equals(btnDisconnect)) {
-            cancelTimer();
+           // cancelTimer();
             if (connectedThread != null) {
                 connectedThread.cancel();
             }
@@ -203,7 +210,7 @@ public class MainActivity extends AppCompatActivity implements
                 connectThread = new ConnectThread(device);
                 connectThread.start();
 
-                startTimer();
+               // startTimer();
             }
         }
     }
@@ -217,8 +224,12 @@ public class MainActivity extends AppCompatActivity implements
                 showFrameMessage();
             }
         } else if (buttonView.equals(switchGetting)) {
-            // On/off data receiving
-            enableReceiving(isChecked);
+            if (gvGraph.getVisibility() == View.GONE) {
+                showGraphs();
+            } else {
+                hideGraphs();
+            }
+            //enableReceiving(isChecked);
         }
     }
 
@@ -476,6 +487,13 @@ public class MainActivity extends AppCompatActivity implements
                         sbConsole.append(buffer.toString());
                         lastSensorValues = buffer.toString();
                         buffer.delete(0, buffer.length());
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                etConsole.setText(lastSensorValues);
+                                etConsole.setMovementMethod(movementMethod);
+                            }
+                        });
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -513,16 +531,25 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
-    private void enableReceiving(boolean state) {
+    private void showGraphs () {
+        gvGraph.setVisibility(View.VISIBLE);
+        btnX.setVisibility(View.VISIBLE);
+    }
+    private void hideGraphs () {
+        gvGraph.setVisibility(View.GONE);
+        btnX.setVisibility(View.GONE);
+    }
+
+/*    private void enableReceiving(boolean state) {
         if (connectedThread != null && connectThread.isConnected()) {
             String command = "";
             command = (state) ? "off#" : "on#";
             connectedThread.write(command);
         }
-    }
+    }*/
 
     private HashMap parseData (String data) {
-        if (data.indexOf(", ") > 0) {
+        if (data.indexOf(",") > 0) {
             HashMap map = new HashMap();
             String[] pairs = data.split(", ");
             for (String pair: pairs) {
@@ -535,30 +562,33 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void startTimer () {
-        cancelTimer();
-        handler = new Handler();
-        final MovementMethod movementMethod = new ScrollingMovementMethod();
-        handler.postDelayed(timer = new Runnable() {
-            @Override
-            public void run() {
-                etConsole.setText(lastSensorValues);
-                etConsole.setMovementMethod(movementMethod);
+     /*   try {
+            cancelTimer();
+            handler = new Handler();
+            final MovementMethod movementMethod = new ScrollingMovementMethod();
+            handler.postDelayed(timer = new Runnable() {
+                @Override
+                public void run() {
 
-                HashMap dataSensor = parseData(lastSensorValues);
-                if (dataSensor != null) {
-                    if (dataSensor.containsKey("X") && dataSensor.containsKey("Y") && dataSensor.containsKey("Z")) {
-                        int temp = Integer.parseInt(dataSensor.get("X").toString());
-                        int tempY = Integer.parseInt(dataSensor.get("Y").toString());
-                        int tempZ = Integer.parseInt(dataSensor.get("Z").toString());
-                        series.appendData(new DataPoint(xLastValue, temp), true, 40);
-                        series.appendData(new DataPoint(xLastValue, tempY), true, 40);
-                        series.appendData(new DataPoint(xLastValue, tempZ), true, 40);
+
+                    HashMap dataSensor = parseData(lastSensorValues);
+                    if (dataSensor != null) {
+                        if (dataSensor.containsKey("X")) {
+                           // int temp = Integer.parseInt(Objects.requireNonNull(dataSensor.get("X")).toString());
+/*                        int tempY = Integer.parseInt(dataSensor.get("Y").toString());
+                        int tempZ = Integer.parseInt(dataSensor.get("Z").toString());*/
+                           // series.appendData(new DataPoint(xLastValue, temp), true, 10);
+/*                        series.appendData(new DataPoint(xLastValue, tempY), true, 40);
+                        series.appendData(new DataPoint(xLastValue, tempZ), true, 40);*/
+            /*            }
+                        xLastValue += 1;
                     }
-                    xLastValue++;
+                    handler.postDelayed(this, DELAY_TIMER);
                 }
-                handler.postDelayed(this, DELAY_TIMER);
-            }
-        }, DELAY_TIMER);
+            }, DELAY_TIMER);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }*/
     }
 
     private void cancelTimer () {

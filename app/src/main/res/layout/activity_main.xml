@@ -16,7 +16,7 @@
 
     <FrameLayout
         android:id="@+id/frame_message"
-        android:visibility="visible"
+        android:visibility="gone"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
@@ -65,7 +65,7 @@
 
     <RelativeLayout
         android:id="@+id/frameDataControls"
-        android:visibility="gone"
+        android:visibility="visible"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
@@ -81,9 +81,10 @@
             android:id="@+id/et_console"
             android:layout_below="@+id/btn_disconnect"
             android:layout_marginTop="32dp"
-            android:lines="3"
+            android:lines="1"
             android:editable="false"
-            android:scrollbars="vertical"
+            android:cursorVisible="false"
+            android:scrollbars="none"
             android:gravity="bottom"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
@@ -93,16 +94,28 @@
             android:layout_below="@+id/et_console"
             android:text="@string/start_data_receiving"
             android:layout_width="match_parent"
+            android:textOff="Показать график"
+            android:textOn="Спрятать график"
             android:textSize="20sp"
             android:textColor="@color/start_data_receiving"
             android:layout_height="wrap_content"/>
 
+        <Button
+            android:id="@+id/get_x"
+            android:layout_marginTop="4dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_below="@+id/start_data_receiving"
+            android:text="График Х"/>
+
         <com.jjoe64.graphview.GraphView
             android:id="@+id/gv_graph"
-            android:layout_below="@+id/start_data_receiving"
             android:layout_marginTop="8dp"
+            android:layout_below="@+id/get_x"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
+
 
     </RelativeLayout>
 
