@@ -81,7 +81,7 @@
             android:id="@+id/et_console"
             android:layout_below="@+id/btn_disconnect"
             android:layout_marginTop="32dp"
-            android:lines="1"
+            android:lines="0"
             android:editable="false"
             android:cursorVisible="false"
             android:scrollbars="none"
@@ -91,6 +91,7 @@
 
         <Switch
             android:id="@+id/start_data_receiving"
+            android:layout_marginTop="4dp"
             android:layout_below="@+id/et_console"
             android:text="@string/start_data_receiving"
             android:layout_width="match_parent"

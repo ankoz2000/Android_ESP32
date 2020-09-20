@@ -161,21 +161,21 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     protected void onPause() {
         super.onPause();
-       // cancelTimer();
+        cancelTimer();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         if (connectedThread != null) {
-         //   startTimer();
+            startTimer();
         }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-       // cancelTimer();
+        cancelTimer();
         unregisterReceiver(receiver);
 
         if (connectThread != null) {
@@ -191,7 +191,7 @@ public class MainActivity extends AppCompatActivity implements
         if (v.equals(btnEnableSearch)) {
             enableSearch();
         } else if (v.equals(btnDisconnect)) {
-           // cancelTimer();
+            cancelTimer();
             if (connectedThread != null) {
                 connectedThread.cancel();
             }
@@ -210,7 +210,7 @@ public class MainActivity extends AppCompatActivity implements
                 connectThread = new ConnectThread(device);
                 connectThread.start();
 
-               // startTimer();
+                startTimer();
             }
         }
     }
@@ -487,13 +487,6 @@ public class MainActivity extends AppCompatActivity implements
                         sbConsole.append(buffer.toString());
                         lastSensorValues = buffer.toString();
                         buffer.delete(0, buffer.length());
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                etConsole.setText(lastSensorValues);
-                                etConsole.setMovementMethod(movementMethod);
-                            }
-                        });
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -549,11 +542,11 @@ public class MainActivity extends AppCompatActivity implements
     }*/
 
     private HashMap parseData (String data) {
-        if (data.indexOf(",") > 0) {
+        if (data.indexOf("X") > 0) {
             HashMap map = new HashMap();
-            String[] pairs = data.split(", ");
+            String[] pairs = data.split("\\t+");
             for (String pair: pairs) {
-                String[] keyValue = pair.split(": ");
+                String[] keyValue = pair.split("\\W\\s");
                 map.put(keyValue[0], keyValue[1]);
             }
             return map;
@@ -562,37 +555,35 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void startTimer () {
-     /*   try {
             cancelTimer();
             handler = new Handler();
             final MovementMethod movementMethod = new ScrollingMovementMethod();
             handler.postDelayed(timer = new Runnable() {
                 @Override
                 public void run() {
-
+                    etConsole.setText(lastSensorValues);
+                    etConsole.setMovementMethod(movementMethod);
 
                     HashMap dataSensor = parseData(lastSensorValues);
                     if (dataSensor != null) {
                         if (dataSensor.containsKey("X")) {
-                           // int temp = Integer.parseInt(Objects.requireNonNull(dataSensor.get("X")).toString());
-/*                        int tempY = Integer.parseInt(dataSensor.get("Y").toString());
-                        int tempZ = Integer.parseInt(dataSensor.get("Z").toString());*/
-                           // series.appendData(new DataPoint(xLastValue, temp), true, 10);
-/*                        series.appendData(new DataPoint(xLastValue, tempY), true, 40);
+                            int temp = Integer.parseInt(Objects.requireNonNull(dataSensor.get("X")).toString());
+                            //int tempY = Integer.parseInt(dataSensor.get("Y").toString());
+                            //int tempZ = Integer.parseInt(dataSensor.get("Z").toString());
+                            series.appendData(new DataPoint(xLastValue, temp), true, 10);
+                        /*series.appendData(new DataPoint(xLastValue, tempY), true, 40);
                         series.appendData(new DataPoint(xLastValue, tempZ), true, 40);*/
-            /*            }
+                        }
                         xLastValue += 1;
                     }
+
                     handler.postDelayed(this, DELAY_TIMER);
                 }
             }, DELAY_TIMER);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }*/
     }
 
     private void cancelTimer () {
-        if (handler != null) {
+        if (handler != null && gvGraph.getVisibility() == View.VISIBLE) {
             handler.removeCallbacks(timer);
         }
     }
