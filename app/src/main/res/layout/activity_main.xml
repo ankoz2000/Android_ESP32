@@ -16,7 +16,7 @@
 
     <FrameLayout
         android:id="@+id/frame_message"
-        android:visibility="gone"
+        android:visibility="visible"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
@@ -65,7 +65,7 @@
 
     <RelativeLayout
         android:id="@+id/frameDataControls"
-        android:visibility="visible"
+        android:visibility="gone"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
@@ -81,11 +81,11 @@
             android:id="@+id/et_console"
             android:layout_below="@+id/btn_disconnect"
             android:layout_marginTop="32dp"
-            android:lines="0"
+            android:lines="1"
             android:editable="false"
             android:cursorVisible="false"
             android:scrollbars="none"
-            android:gravity="bottom"
+            android:gravity="top"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 

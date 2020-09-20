@@ -14,6 +14,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.text.method.MovementMethod;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
@@ -85,7 +86,7 @@ public class MainActivity extends AppCompatActivity implements
     private ProgressDialog progressDialog;
 
     private GraphView gvGraph;
-    private LineGraphSeries series = new LineGraphSeries();
+    private LineGraphSeries series;
 
     private String lastSensorValues = "";
 
@@ -127,9 +128,11 @@ public class MainActivity extends AppCompatActivity implements
 
         bluetoothDevices = new ArrayList<>();
 
+        series = new LineGraphSeries();
+
         gvGraph.addSeries(series);
         gvGraph.getViewport().setMinX(0);
-        gvGraph.getViewport().setMaxX(10);
+        gvGraph.getViewport().setMaxX(5);
         gvGraph.getViewport().setXAxisBoundsManual(true);
         gvGraph.setVisibility(View.GONE);
 
@@ -541,9 +544,9 @@ public class MainActivity extends AppCompatActivity implements
         }
     }*/
 
-    private HashMap parseData (String data) {
-        if (data.indexOf("X") > 0) {
-            HashMap map = new HashMap();
+    private HashMap<String, String> parseData (String data) {
+        if (data.indexOf(':') > 0) {
+            HashMap<String, String> map = new HashMap<String, String>();
             String[] pairs = data.split("\\t+");
             for (String pair: pairs) {
                 String[] keyValue = pair.split("\\W\\s");
@@ -557,24 +560,37 @@ public class MainActivity extends AppCompatActivity implements
     private void startTimer () {
             cancelTimer();
             handler = new Handler();
-            final MovementMethod movementMethod = new ScrollingMovementMethod();
+            final ScrollingMovementMethod movementMethod = new ScrollingMovementMethod();
             handler.postDelayed(timer = new Runnable() {
                 @Override
                 public void run() {
                     etConsole.setText(lastSensorValues);
                     etConsole.setMovementMethod(movementMethod);
 
-                    HashMap dataSensor = parseData(lastSensorValues);
-                    if (dataSensor != null) {
-                        if (dataSensor.containsKey("X")) {
-                            int temp = Integer.parseInt(Objects.requireNonNull(dataSensor.get("X")).toString());
-                            //int tempY = Integer.parseInt(dataSensor.get("Y").toString());
-                            //int tempZ = Integer.parseInt(dataSensor.get("Z").toString());
-                            series.appendData(new DataPoint(xLastValue, temp), true, 10);
+                    HashMap<String, String> dataSensor = parseData(lastSensorValues);
+                    try {
+                        if (dataSensor != null) {
+                            if (dataSensor.containsKey("X")) {
+
+                                int temp = Integer.parseInt(Objects.requireNonNull(dataSensor.get("X")).toString());
+                                //int tempY = Integer.parseInt(dataSensor.get("Y").toString());
+                                //int tempZ = Integer.parseInt(dataSensor.get("Z").toString());
+                                series.appendData(new DataPoint(xLastValue, temp), true, 10);
                         /*series.appendData(new DataPoint(xLastValue, tempY), true, 40);
                         series.appendData(new DataPoint(xLastValue, tempZ), true, 40);*/
+                            }
+                            xLastValue += 1;
                         }
-                        xLastValue += 1;
+                    } catch (final Exception e) {
+                        Log.e(TAG, "Err: ", e);
+                        e.printStackTrace();
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                progressDialog.dismiss();
+                                Toast.makeText(MainActivity.this, e.toString(), Toast.LENGTH_SHORT).show();
+                            }
+                        });
                     }
 
                     handler.postDelayed(this, DELAY_TIMER);
