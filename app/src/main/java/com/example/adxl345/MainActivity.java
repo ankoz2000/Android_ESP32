@@ -1,8 +1,10 @@
 package com.example.adxl345;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -12,12 +14,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.method.MovementMethod;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
@@ -57,7 +62,7 @@ public class MainActivity extends AppCompatActivity implements
     private static final int REQ_ENABLE_BT    = 10;
     public static final int BT_BOUNDED        = 21;
     public static final int BT_SEARCH         = 22;
-    private static final long DELAY_TIMER = 1000;
+   // private static final long DELAY_TIMER = 100;
 
 
     private FrameLayout frameMessage;
@@ -78,22 +83,26 @@ public class MainActivity extends AppCompatActivity implements
     private BtListAdapter listAdapter;
     private ArrayList<BluetoothDevice> bluetoothDevices;
 
-    private Button btnX;
-
     private ConnectThread connectThread;
     private ConnectedThread connectedThread;
 
     private ProgressDialog progressDialog;
 
     private GraphView gvGraph;
-    private LineGraphSeries series;
+    private LineGraphSeries seriesX;
+    private LineGraphSeries seriesY;
+    private LineGraphSeries seriesZ;
 
     private String lastSensorValues = "";
 
     private Handler handler;
     private Runnable timer;
 
-    private int xLastValue = 0;
+    private double xLastValue = 0.0;
+    private double yLastValue = 0.0;
+    private double zLastValue = 0.0;
+
+    private SettingsModel preference;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -113,27 +122,38 @@ public class MainActivity extends AppCompatActivity implements
         switchGetting     = findViewById(R.id.start_data_receiving);
         etConsole         = findViewById(R.id.et_console);
 
-        btnX = findViewById(R.id.get_x);
-
         gvGraph = findViewById(R.id.gv_graph);
 
         switchEnableBt.setOnCheckedChangeListener(this);
         btnEnableSearch.setOnClickListener(this);
         listBtDevices.setOnItemClickListener(this);
 
-        btnX.setVisibility(View.GONE);
+        preference = new SettingsModel(this);
 
         btnDisconnect.setOnClickListener(this);
         switchGetting.setOnCheckedChangeListener(this);
 
         bluetoothDevices = new ArrayList<>();
 
-        series = new LineGraphSeries();
+        seriesX = new LineGraphSeries();
+        seriesX.setColor(Color.RED);
+        seriesX.setThickness(3);
+        seriesY = new LineGraphSeries();
+        seriesY.setColor(Color.BLUE);
+        seriesY.setThickness(3);
+        seriesZ = new LineGraphSeries();
+        seriesZ.setColor(Color.GREEN);
+        seriesZ.setThickness(3);
 
-        gvGraph.addSeries(series);
+        gvGraph.addSeries(seriesX);
+        gvGraph.addSeries(seriesY);
+        gvGraph.addSeries(seriesZ);
         gvGraph.getViewport().setMinX(0);
-        gvGraph.getViewport().setMaxX(5);
+        gvGraph.getViewport().setMaxX(preference.getPointsCount());
         gvGraph.getViewport().setXAxisBoundsManual(true);
+        gvGraph.getViewport().setMinY(-5);
+        gvGraph.getViewport().setMaxY(5);
+        gvGraph.getViewport().setYAxisBoundsManual(true);
         gvGraph.setVisibility(View.GONE);
 
         progressDialog = new ProgressDialog(this);
@@ -159,6 +179,21 @@ public class MainActivity extends AppCompatActivity implements
             switchEnableBt.setChecked(true);
             setListAdapter(BT_BOUNDED);
         }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main_menu, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == R.id.item_settings) {
+            Intent intent = new Intent(this, SettingsActivity.class);
+            startActivity(intent);
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -218,6 +253,7 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
+    @SuppressLint("SetTextI18n")
     @Override
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
         if (buttonView.equals(switchEnableBt)) {
@@ -228,11 +264,12 @@ public class MainActivity extends AppCompatActivity implements
             }
         } else if (buttonView.equals(switchGetting)) {
             if (gvGraph.getVisibility() == View.GONE) {
-                showGraphs();
+                showGraphUi();
+                switchGetting.setText("Спрятать график");
             } else {
-                hideGraphs();
+                hideGraphUi();
+                switchGetting.setText("Показать график");
             }
-            //enableReceiving(isChecked);
         }
     }
 
@@ -527,22 +564,12 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
-    private void showGraphs () {
+    private void showGraphUi () {
         gvGraph.setVisibility(View.VISIBLE);
-        btnX.setVisibility(View.VISIBLE);
     }
-    private void hideGraphs () {
+    private void hideGraphUi () {
         gvGraph.setVisibility(View.GONE);
-        btnX.setVisibility(View.GONE);
     }
-
-/*    private void enableReceiving(boolean state) {
-        if (connectedThread != null && connectThread.isConnected()) {
-            String command = "";
-            command = (state) ? "off#" : "on#";
-            connectedThread.write(command);
-        }
-    }*/
 
     private HashMap<String, String> parseData (String data) {
         if (data.indexOf(':') > 0) {
@@ -571,15 +598,30 @@ public class MainActivity extends AppCompatActivity implements
                     try {
                         if (dataSensor != null) {
                             if (dataSensor.containsKey("X")) {
+                                double temp = 0.00;
+                                double tempY = 0.00;
+                                double tempZ = 0.00;
 
-                                int temp = Integer.parseInt(Objects.requireNonNull(dataSensor.get("X")).toString());
-                                //int tempY = Integer.parseInt(dataSensor.get("Y").toString());
-                                //int tempZ = Integer.parseInt(dataSensor.get("Z").toString());
-                                series.appendData(new DataPoint(xLastValue, temp), true, 10);
-                        /*series.appendData(new DataPoint(xLastValue, tempY), true, 40);
-                        series.appendData(new DataPoint(xLastValue, tempZ), true, 40);*/
+                                try {
+                                    temp = Double.parseDouble(dataSensor.get("X"));
+                                    tempY = Double.parseDouble(dataSensor.get("Y"));
+                                    tempZ = Double.parseDouble(dataSensor.get("Z"));
+                                } catch (Exception e) {
+                                    Log.e(TAG, e.toString());
+                                }
+                                if (preference.isCheckBoxX()) {
+                                    seriesX.appendData(new DataPoint(xLastValue, temp), true, preference.getPointsCount());
+                                }
+                                if (preference.isCheckBoxY()) {
+                                    seriesY.appendData(new DataPoint(yLastValue, tempY), true, preference.getPointsCount());
+                                }
+                                if (preference.isCheckBoxZ()) {
+                                    seriesZ.appendData(new DataPoint(zLastValue, tempZ), true, preference.getPointsCount());
+                                }
                             }
                             xLastValue += 1;
+                            yLastValue += 1;
+                            zLastValue += 1;
                         }
                     } catch (final Exception e) {
                         Log.e(TAG, "Err: ", e);
@@ -593,9 +635,9 @@ public class MainActivity extends AppCompatActivity implements
                         });
                     }
 
-                    handler.postDelayed(this, DELAY_TIMER);
+                    handler.postDelayed(this, preference.getDelayTimer());
                 }
-            }, DELAY_TIMER);
+            }, preference.getDelayTimer());
     }
 
     private void cancelTimer () {

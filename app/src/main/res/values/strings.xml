@@ -1,15 +1,20 @@
 <resources>
     <string name="app_name">Accelerometer</string>
-    <string name="on_off_bluetooth">On/off Bluetooth</string>
-    <string name="bluetooth_off">Bluetooth is disabled</string>
-    <string name="start_searching">Start searching</string>
-    <string name="Bluetooth_is_not_available">Bluetooth is not available</string>
-    <string name="stop_searching">Stop searching</string>
-    <string name="disconnect">Disconnect</string>
-    <string name="start_data_recieving">Start data receiving</string>
-    <string name="start_data_receiving">start_data_receiving</string>
+    <string name="on_off_bluetooth">Вкл/выкл Bluetooth</string>
+    <string name="bluetooth_off">Bluetooth отключен</string>
+    <string name="start_searching">Начать поиск устройств</string>
+    <string name="Bluetooth_is_not_available">Bluetooth недоступен</string>
+    <string name="stop_searching">Остановить поиск</string>
+    <string name="disconnect">Отключиться</string>
+    <string name="start_data_receiving">Показать график</string>
+    <string name="stop_data_receiving">Спрятать график</string>
     <string name="name_device">Name device</string>
     <string name="address_device">Address device</string>
     <string name="connecting">Connecting…</string>
     <string name="wait">Wait please:)</string>
+    <string name="graphx">График Х</string>
+    <string name="graphy">График Y</string>
+    <string name="graphyz">График Z</string>
+    <string name="allgraphs">Общий</string>
+    <string name="settings">Настройки</string>
 </resources>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <EditTextPreference
+        android:defaultValue="100"
+        android:inputType="number"
+        android:key="delay_timer"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:title="Обновление графика (мс.)" />
+    <EditTextPreference
+        android:defaultValue="1000"
+        android:inputType="number"
+        android:key="points_count"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:summary="Не более 1000"
+        android:title="Число точек на графике" />
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:key="check_box_x"
+        android:summary="Нажмите, чтобы показать"
+        android:title="График X" />
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:key="check_box_y"
+        android:summary="Нажмите, чтобы показать"
+        android:title="График Y" />
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:key="check_box_z"
+        android:summary="Нажмите, чтобы показать"
+        android:title="График Z" />
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="last_connected_device"
+        android:summary="К последнему подключенному устройству"
+        android:title="Автоматическое подключение" />
+</PreferenceScreen>
